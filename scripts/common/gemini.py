@@ -1,16 +1,22 @@
 import os
 from google import genai
 from google.genai import types
-from common.config import settings
+
+from scripts.common.config import get_settings
+
+settings = get_settings()
 
 
 def generate(prompt: str):
     client = genai.Client(
-        api_key=settings.GEMINI_API_KEY | os.environ.get("GEMINI_API_KEY"),
+        api_key=settings.GEMINI_API_KEY or os.environ.get("GEMINI_API_KEY"),
     )
 
-    model = settings.GEMINI_MODEL | os.environ.get(
-        "GEMINI_MODEL") | "gemini-3-flash-preview"
+    model = (
+        settings.GEMINI_MODEL
+        or os.environ.get("GEMINI_MODEL")
+        or "gemini-3-flash-preview"
+    )
     contents = [
         types.Content(
             role="user",
@@ -35,4 +41,4 @@ def generate(prompt: str):
 
 
 if __name__ == "__main__":
-    generate()
+    generate("Hello, how are you?")
