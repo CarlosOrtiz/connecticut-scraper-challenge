@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from scripts.tax_sales.client import TaxSalesClient
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("scrape_tax_sales")
 
 
 def scrape_tax_sales() -> list[dict]:
@@ -95,6 +95,10 @@ def scrape_tax_sales() -> list[dict]:
     for sale in results:
         town = sale["town"]
 
+        if not sale["pdf_links"]:
+            logger.warning(f"Sin PDFs: {town}")
+            continue
+
         for pdf_url in sale["pdf_links"]:
             response = session.get(pdf_url, timeout=30)
             response.raise_for_status()
@@ -102,9 +106,13 @@ def scrape_tax_sales() -> list[dict]:
             filename = pdf_url.split("/")[-1]
             file_path = os.path.join("downloads", filename)
 
+            if os.path.exists(file_path):
+                logger.warning(f"Ya existe, se omite [{town}]: {filename}")
+                continue
+
             with open(file_path, "wb") as file:
                 file.write(response.content)
 
-        print(f"Descargado [{town}]: {filename}")
+        logger.info(f"Descargado [{town}]: {filename}")
 
     return results
