@@ -2,13 +2,11 @@ import logging
 from bs4 import BeautifulSoup
 import requests
 
-from scripts.foreclosures.client import BASE_URL
-
 logger = logging.getLogger(__name__)
 
 
-def extract_city_data(session, town_name, href):
-    city_url = f"{BASE_URL}{href}"
+def extract_city_data(session, base_url, town_name, href):
+    city_url = f"{base_url}{href}"
     try:
         response = session.get(city_url, timeout=15)
         response.raise_for_status()

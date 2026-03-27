@@ -5,16 +5,18 @@ import requests
 from bs4 import BeautifulSoup
 
 from scripts.common.db import ForeclosuresRepository
-from scripts.foreclosures.client import INDEX_URL, get_session
+from scripts.foreclosures.client import ForeclosuresClient
 from scripts.foreclosures.normalize_property import normalize_property
-from scripts.foreclosures.parser import extract_city_data
+from scripts.foreclosures.city_parser import extract_city_data
 
 logger = logging.getLogger(__name__)
 
 
-async def scrape_foreclosures():
+async def scrape_foreclosures() -> None:
     logger.info("Iniciando scraper de Foreclosures...")
-    session = get_session()
+
+    client = ForeclosuresClient()
+    session = client.get_session()
     repo = ForeclosuresRepository()
 
     try:
@@ -27,8 +29,7 @@ async def scrape_foreclosures():
         return
 
     try:
-        response = session.get(INDEX_URL, timeout=15)
-        print(INDEX_URL)
+        response = session.get(client.index_url, timeout=15)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         logger.error(f"Error crítico conectando al índice: {e}")
@@ -46,9 +47,6 @@ async def scrape_foreclosures():
 
     results = []
 
-    # PASO 2: Extraer datos de cada ciudad
-    # Nota: Iteramos sobre las primeras 5 para no saturar el servidor ni esperar mucho durante las pruebas.
-    # Cuando quieras ejecutarlo completo, cambia `enlaces[:5]` por `enlaces`
     for link in links:
         town_name = link.get_text(strip=True).upper()
         href = link.get("href")
@@ -58,7 +56,7 @@ async def scrape_foreclosures():
             continue
 
         logger.info(f"Extrayendo datos de: {town_name}...")
-        properties = extract_city_data(session, town_name, href)
+        properties = extract_city_data(session, client.base_url, town_name, href)
 
         normalized_properties = [normalize_property(city) for city in properties]
 

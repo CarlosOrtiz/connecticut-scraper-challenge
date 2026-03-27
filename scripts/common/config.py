@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str
 
     BASE_URL_CT: str
+    URL_CT_TAX: str
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env", env_file_encoding="utf-8", extra="ignore"
