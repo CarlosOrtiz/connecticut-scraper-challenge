@@ -76,6 +76,7 @@ docker compose up -d
 ```
 
 ## Seed de Prompts
+# Nota: se creo solo para no crearlos manualmente, o por un endpoint en el futuro se puede agregar un CRUD de prompts
 
 Para crear los prompts en la colección `prompts` en MongoDB:
 
@@ -86,7 +87,7 @@ python -m scripts.seed_prompts
 ## Parte 1
 
 ### Ejecutar Foreclosures (con VPN)
-
+# Nota: Para ejecutar este script se necesita VPN
 ```bash
 python scripts/foreclosures/main.py
 ```
