@@ -1,0 +1,55 @@
+service: connecticut-scraper-challenge
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: python3.12
+  region: us-east-1
+
+functions:
+  api:
+    handler: src/handlers/api_handler.handler
+    events:
+      - http:
+          path: foreclosures/scrape
+          method: post
+
+  scrape-tax-sales:
+    handler: src/handlers/scrape_tax_sales_handler.handler
+    events:
+      - schedule:
+          rate: cron(0 9 ? * FRI *)
+          enabled: true
+
+  execution-logs-consumer:
+    handler: src/handlers/execution_logs_consumer_handler.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - ExecutionLogsQueue
+              - Arn
+
+resources:
+  Resources:
+    TaxSalesFinishedTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: tax-sales-finished
+
+    ExecutionLogsQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: execution-logs-queue
+
+    ExecutionLogsSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        TopicArn:
+          Ref: TaxSalesFinishedTopic
+        Protocol: sqs
+        Endpoint:
+          Fn::GetAtt:
+            - ExecutionLogsQueue
+            - Arn
