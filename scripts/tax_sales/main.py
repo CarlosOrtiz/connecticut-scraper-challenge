@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -12,19 +13,23 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from scripts.common.config import get_settings
-from scripts.tax_sales.service import scrape_tax_sales
+from scripts.common.config import get_settings  # noqa: E402
+from scripts.tax_sales.service import scrape_tax_sales  # noqa: E402
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 settings = get_settings()
 MongoManager.initialize(settings.MONGO_URI)
 
-logger = logging.getLogger(__name__)
 
-
-def main() -> None:
-    results = scrape_tax_sales()
-    print(json.dumps(results, indent=2, ensure_ascii=False))
+async def main() -> None:
+    await scrape_tax_sales()
+    # results = await scrape_tax_sales()
+    # print(json.dumps(results, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

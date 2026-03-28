@@ -1,19 +1,19 @@
 import logging
 import os
+from datetime import datetime, timezone
 
 import requests
 
-from bs4 import BeautifulSoup
+from scripts.common.gemini import extract_pdf_data
+from scripts.common.db import PromptsRepository, TaxSalesRepository
 from scripts.tax_sales.client import TaxSalesClient
+from scripts.tax_sales.downloader import set_downloads_dir, download_pdf
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger("scrape_tax_sales")
 
 
-def scrape_tax_sales() -> list[dict]:
-    folder_name = "downloads"
-    if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
-
+async def scrape_tax_sales() -> list[dict]:
     client = TaxSalesClient()
     session = client.get_session()
 
@@ -92,27 +92,96 @@ def scrape_tax_sales() -> list[dict]:
     if current_sale:
         results.append(current_sale)
 
+    if not results:
+        logger.warning("No se encontraron tax sales en la página.")
+        return []
+
+    """ results = [sale for sale in results if sale["town"] == "WINDSOR LOCKS"]
+    logger.info("Modo prueba: solo se procesará WINDSOR LOCKS")
+
+    if not results:
+        logger.warning("No se encontró WINDSOR LOCKS en los resultados.")
+        return [] """
+
+    downloads_dir = set_downloads_dir(os.path.dirname(__file__), "downloads")
+    prompts_repo = PromptsRepository()
+    tax_sales_repo = TaxSalesRepository()
+
+    try:
+        active_prompts = await prompts_repo.get_prompts()
+        logger.info("Se encontraron %s prompts activos.", len(active_prompts))
+    except Exception as exc:
+        logger.error("Error consultando prompts activos: %s", exc)
+        return []
+
+    documents_to_store = []
+
     for sale in results:
         town = sale["town"]
 
+        document = {
+            "town": town,
+            "auction_date": sale["auction_date"],
+            "location": sale["location"],
+            "extracted_data": [],
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
         if not sale["pdf_links"]:
-            logger.warning(f"Sin PDFs: {town}")
+            logger.warning("Sin PDFs: %s", town)
+            documents_to_store.append(document)
+            try:
+                await tax_sales_repo.upsert_tax_sale(document)
+            except Exception as exc:
+                logger.error("Error guardando tax sale %s: %s", town, exc)
             continue
 
         for pdf_url in sale["pdf_links"]:
-            response = session.get(pdf_url, timeout=30)
-            response.raise_for_status()
-
-            filename = pdf_url.split("/")[-1]
-            file_path = os.path.join("downloads", filename)
-
-            if os.path.exists(file_path):
-                logger.warning(f"Ya existe, se omite [{town}]: {filename}")
+            try:
+                pdf_meta = download_pdf(session, pdf_url, downloads_dir)
+                logger.info(
+                    "PDF %s [%s]: %s",
+                    "descargado" if pdf_meta["downloaded"] else "omitido",
+                    town,
+                    pdf_meta["pdf_filename"],
+                )
+            except Exception as exc:
+                logger.error("Error descargando PDF %s: %s", pdf_url, exc)
                 continue
 
-            with open(file_path, "wb") as file:
-                file.write(response.content)
+            gemini_fields = {}
 
-        logger.info(f"Descargado [{town}]: {filename}")
+            for prompt in active_prompts:
+                try:
+                    gemini_result = extract_pdf_data(
+                        pdf_meta["pdf_local_path"],
+                        prompt,
+                    )
+                    gemini_fields.update(gemini_result)
+                except Exception as exc:
+                    logger.error(
+                        "Error ejecutando prompt %s para %s: %s",
+                        prompt.get("key"),
+                        pdf_meta["pdf_filename"],
+                        exc,
+                    )
 
-    return results
+            document["extracted_data"].append(
+                {
+                    "pdf_url": pdf_meta["pdf_url"],
+                    "pdf_local_path": pdf_meta["pdf_local_path"],
+                    "pdf_filename": pdf_meta["pdf_filename"],
+                    **gemini_fields,
+                }
+            )
+
+            documents_to_store.append(document)
+
+            try:
+                await tax_sales_repo.upsert_tax_sale(document)
+            except Exception as exc:
+                logger.error(
+                    "Error guardando tax sale %s: %s", pdf_meta["pdf_filename"], exc
+                )
+
+    return documents_to_store

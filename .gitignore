@@ -8,6 +8,7 @@ __pycache__/
 *.so
 
 downloads/
+scripts/seed_prompts.py
 
 # Distribution / packaging
 .Python
