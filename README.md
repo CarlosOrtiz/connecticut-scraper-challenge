@@ -76,7 +76,7 @@ docker compose up -d
 ```
 
 ## Seed de Prompts
-### Nota: se creo solo para no crearlos manualmente, o por un endpoint en el futuro se puede agregar un CRUD de prompts
+### Nota: se creo solo para no crearlos manualmente, o por un endpoint en el futuro se puede agregar un CRUD de prompts, (queriendo hacer un init database)
 
 Para crear los prompts en la colección `prompts` en MongoDB:
 

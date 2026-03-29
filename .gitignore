@@ -7,15 +7,11 @@ __pycache__/
 # C extensions
 *.so
 
-downloads/
-scripts/seed_prompts.py
-
 # Distribution / packaging
 .Python
 build/
 develop-eggs/
 dist/
-downloads/
 eggs/
 .eggs/
 lib/
