@@ -1,11 +1,9 @@
 import requests
 import urllib3
 from requests.adapters import HTTPAdapter
-
-from scripts.common.config import get_settings
+from src.common.config import get_settings
 
 settings = get_settings()
-
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 

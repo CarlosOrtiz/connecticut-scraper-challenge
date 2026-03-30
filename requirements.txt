@@ -1,12 +1,10 @@
-asyncio>=4.0.0
-aws-python-helper>=0.34.0
+aws-python-helper==0.34.0
 beautifulsoup4>=4.14.3
 boto3>=1.39.0
 google-genai>=1.68.0
-logging>=0.4.9.6
 pydantic>=2.12.5
 pydantic-settings>=2.13.1
-pymongo>=4.16.0
+pymongo==4.6.1
 pytest>=9.0.0
 pytest-cov>=6.2.0
 python-dotenv>=1.2.2

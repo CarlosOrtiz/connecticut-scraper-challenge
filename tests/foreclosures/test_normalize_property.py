@@ -1,4 +1,4 @@
-from scripts.foreclosures.normalize_property import normalize_property
+from src.scrapers.foreclosures.normalize_property import normalize_property
 
 
 def test_normalize_property_splits_main_fields():

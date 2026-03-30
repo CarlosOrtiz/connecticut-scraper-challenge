@@ -1,14 +1,16 @@
-from aws_python_helper import MongoManager
-
+import asyncio
 import os
 import sys
+
+from aws_python_helper import MongoManager
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from scripts.common.config import get_settings  # noqa: E402
-from scripts.common.db import PromptsRepository  # noqa: E402
+from src.common.config import get_settings  # noqa: E402
+from src.repositories.prompts_repository import PromptsRepository  # noqa: E402
+
 
 settings = get_settings()
 MongoManager.initialize(settings.MONGO_URI)
@@ -42,7 +44,7 @@ PROMPTS = [
 ]
 
 
-async def main():
+async def main() -> None:
     repo = PromptsRepository()
 
     for prompt in PROMPTS:
@@ -56,6 +58,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    import asyncio
-
     asyncio.run(main())

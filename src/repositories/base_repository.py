@@ -1,6 +1,6 @@
 from aws_python_helper import Repository
 
-from scripts.common.config import get_settings
+from src.common.config import get_settings
 
 settings = get_settings()
 

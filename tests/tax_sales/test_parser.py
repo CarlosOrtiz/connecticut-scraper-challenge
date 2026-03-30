@@ -1,4 +1,4 @@
-from scripts.tax_sales.parser import parse_tax_sales
+from src.scrapers.tax_sales.parser import parse_tax_sales
 
 
 def test_parse_tax_sales_page_extracts_data():

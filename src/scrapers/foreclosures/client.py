@@ -1,5 +1,5 @@
-from scripts.common.config import get_settings
-from scripts.common.scraper_client import ScraperClient
+from src.common.config import get_settings
+from src.common.scraper_client import ScraperClient
 
 settings = get_settings()
 

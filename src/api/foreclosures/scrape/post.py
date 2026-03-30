@@ -1,5 +1,5 @@
 from aws_python_helper.api.base import API
-from scripts.foreclosures.service import scrape_foreclosures
+from src.services.foreclosures_service import scrape_foreclosures
 
 
 class ForeclosuresScrapePostAPI(API):

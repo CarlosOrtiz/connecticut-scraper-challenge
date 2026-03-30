@@ -1,19 +1,20 @@
 import logging
-import os
 from datetime import datetime, timezone
-
+from typing import Any
 import requests
 
-from scripts.common.gemini import extract_pdf_data
-from scripts.common.db import PromptsRepository, TaxSalesRepository
-from scripts.tax_sales.client import TaxSalesClient
-from scripts.tax_sales.downloader import set_downloads_dir, download_pdf
-from scripts.tax_sales.parser import parse_tax_sales
+from src.common.gemini import extract_pdf_data
+from src.repositories.prompts_repository import PromptsRepository
+from src.repositories.tax_sales_repository import TaxSalesRepository
+from src.scrapers.tax_sales.client import TaxSalesClient
+from src.scrapers.tax_sales.downloader import download_pdf, set_downloads_dir
+from src.scrapers.tax_sales.parser import parse_tax_sales
+
 
 logger = logging.getLogger("scrape_tax_sales")
 
 
-async def scrape_tax_sales() -> list[dict]:
+async def scrape_tax_sales() -> list[dict[str, Any]]:
     client = TaxSalesClient()
     session = client.get_session()
 
@@ -29,7 +30,7 @@ async def scrape_tax_sales() -> list[dict]:
         logger.warning("No se encontraron tax sales en la página.")
         return []
 
-    downloads_dir = set_downloads_dir(os.path.dirname(__file__), "downloads")
+    downloads_dir = set_downloads_dir()
     prompts_repo = PromptsRepository()
     tax_sales_repo = TaxSalesRepository()
 
@@ -40,12 +41,12 @@ async def scrape_tax_sales() -> list[dict]:
         logger.error("Error consultando prompts activos: %s", exc)
         return []
 
-    documents_to_store = []
+    documents_to_store: list[dict[str, Any]] = []
 
     for sale in results:
         town = sale["town"]
 
-        document = {
+        document: dict[str, Any] = {
             "town": town,
             "auction_date": sale["auction_date"],
             "location": sale["location"],
@@ -101,13 +102,11 @@ async def scrape_tax_sales() -> list[dict]:
                 }
             )
 
-            documents_to_store.append(document)
+        documents_to_store.append(document)
 
-            try:
-                await tax_sales_repo.upsert_tax_sale(document)
-            except Exception as exc:
-                logger.error(
-                    "Error guardando tax sale %s: %s", pdf_meta["pdf_filename"], exc
-                )
+        try:
+            await tax_sales_repo.upsert_tax_sale(document)
+        except Exception as exc:
+            logger.error("Error guardando tax sale %s: %s", town, exc)
 
     return documents_to_store

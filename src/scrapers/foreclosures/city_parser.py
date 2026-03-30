@@ -1,12 +1,18 @@
 import logging
-from bs4 import BeautifulSoup
+from typing import Any
+
 import requests
+from bs4 import BeautifulSoup
+from requests import Session
 
 logger = logging.getLogger(__name__)
 
 
-def extract_city_data(session, base_url, town_name, href):
+def extract_city_data(
+    session: Session, base_url: str, town_name: str, href: str
+) -> list[dict[str, Any]]:
     city_url = f"{base_url}{href}"
+
     try:
         response = session.get(city_url, timeout=15)
         response.raise_for_status()
@@ -29,7 +35,8 @@ def extract_city_data(session, base_url, town_name, href):
         for th in rows[0].find_all(["th", "td"])
     ]
 
-    foreclosures = []
+    foreclosures: list[dict[str, Any]] = []
+
     for row in rows[1:]:
         cells = row.find_all("td")
         if len(cells) == len(headers):

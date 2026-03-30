@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     BASE_URL_CT: str
     URL_CT_TAX: str
 
+    SNS_TOPIC_ARN: str
+
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env", env_file_encoding="utf-8", extra="ignore"
     )

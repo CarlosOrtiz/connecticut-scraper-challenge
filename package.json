@@ -1,0 +1,27 @@
+{
+  "name": "connecticut-scraper-challenge",
+  "version": "1.0.0",
+  "description": "Prueba técnica en Python para extraer información de:",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CarlosOrtiz/connecticut-scraper-challenge.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/CarlosOrtiz/connecticut-scraper-challenge/issues"
+  },
+  "homepage": "https://github.com/CarlosOrtiz/connecticut-scraper-challenge#readme",
+  "devDependencies": {
+    "serverless-python-requirements": "^6.1.2"
+  }
+}

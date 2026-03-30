@@ -73,7 +73,4 @@ def parse_tax_sales(html: str) -> list[dict]:
     if current_sale:
         results.append(current_sale)
 
-    """ logger.info("Modo prueba: solo se procesará WINDSOR LOCKS")
-    results = [sale for sale in results if sale["town"] == "WINDSOR LOCKS"] """
-
     return results

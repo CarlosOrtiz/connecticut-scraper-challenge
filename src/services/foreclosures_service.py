@@ -1,18 +1,25 @@
 import logging
+from typing import TypedDict
 from datetime import datetime, timezone
 
 import requests
 from bs4 import BeautifulSoup
 
-from scripts.common.db import ForeclosuresRepository
-from scripts.foreclosures.client import ForeclosuresClient
-from scripts.foreclosures.normalize_property import normalize_property
-from scripts.foreclosures.city_parser import extract_city_data
+from src.repositories.foreclosures_repository import ForeclosuresRepository
+from src.scrapers.foreclosures.client import ForeclosuresClient
+from src.scrapers.foreclosures.normalize_property import normalize_property
+from src.scrapers.foreclosures.city_parser import extract_city_data
 
 logger = logging.getLogger(__name__)
 
 
-async def scrape_foreclosures() -> None:
+class ScrapeForeclosuresResult(TypedDict):
+    success: bool
+    modified_count: int
+    upserted_count: int
+
+
+async def scrape_foreclosures() -> ScrapeForeclosuresResult | None:
     logger.info("Iniciando scraper de Foreclosures...")
 
     client = ForeclosuresClient()
@@ -22,17 +29,17 @@ async def scrape_foreclosures() -> None:
     try:
         existing_towns = await repo.get_existing_towns()
         logger.info(
-            f"Se encontraron {len(existing_towns)} towns ya guardados en MongoDB."
+            "Se encontraron %s towns ya guardados en MongoDB: ", len(existing_towns)
         )
     except Exception as e:
-        logger.error(f"Error consultando towns existentes: {e}")
+        logger.error("Error consultando towns existentes: %s", e)
         return
 
     try:
         response = session.get(client.index_url, timeout=15)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        logger.error(f"Error crítico conectando al índice: {e}")
+        logger.error("Error crítico conectando al índice: %s", e)
         return
 
     soup = BeautifulSoup(response.text, "html.parser")
@@ -43,9 +50,9 @@ async def scrape_foreclosures() -> None:
         return
 
     links = panel.find_all("a")
-    logger.info(f"Se encontraron {len(links)} ciudades para procesar.")
+    logger.info("Se encontraron %s ciudades para procesar: ", len(links))
 
-    results = []
+    results: list[dict] = []
 
     for link in links:
         town_name = link.get_text(strip=True).upper()
@@ -75,9 +82,16 @@ async def scrape_foreclosures() -> None:
             result = await repo.bulk_upsert_towns(results)
             if result:
                 logger.info(
-                    f"✅ Proceso terminado. Modificados/Nuevos: {result.modified_count + result.upserted_count}"
+                    "✅ Proceso terminado. Modificados/Nuevos: %s",
+                    result.modified_count + result.upserted_count,
                 )
+                return {
+                    "success": True,
+                    "modified_count": result.modified_count,
+                    "upserted_count": result.upserted_count,
+                }
+
         except Exception as e:
-            logger.error(f"Error guardando en base de datos: {e}")
+            logger.error("Error guardando en base de datos: %s", e)
     else:
         logger.warning("No se encontraron towns nuevos para guardar.")

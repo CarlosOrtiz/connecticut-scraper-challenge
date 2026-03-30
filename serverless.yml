@@ -2,10 +2,46 @@ service: connecticut-scraper-challenge
 
 frameworkVersion: "3"
 
+plugins:
+  - serverless-python-requirements
+
 provider:
   name: aws
-  runtime: python3.12
+  runtime: python3.11
   region: us-east-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sns:Publish
+          Resource:
+            Ref: TaxSalesFinishedTopic
+  environment:
+    MONGO_URI: ${env:MONGO_URI}
+    MONGO_DB_NAME: ${env:MONGO_DB_NAME}
+    GEMINI_API_KEY: ${env:GEMINI_API_KEY}
+    GEMINI_MODEL: ${env:GEMINI_MODEL}
+    BASE_URL_CT: ${env:BASE_URL_CT}
+    URL_CT_TAX: ${env:URL_CT_TAX}
+    SNS_TOPIC_ARN:
+      Ref: TaxSalesFinishedTopic
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+
+package:
+  patterns:
+    - "!venv/**"
+    - "!.pytest_cache/**"
+    - "!.coverage"
+    - "!.env"
+    - "!.env.example"
+    - "!__pycache__/**"
+    - "!tests/**"
+    - "!*.md"
+    - "!docker-compose.yml"
 
 functions:
   api:
@@ -16,14 +52,16 @@ functions:
           method: post
 
   scrape-tax-sales:
-    handler: src/handlers/scrape_tax_sales_handler.handler
+    handler: src/handlers/lambda_handler.scrape_tax_sales_handler
+    timeout: 120
+    memorySize: 1024
     events:
       - schedule:
           rate: cron(0 9 ? * FRI *)
           enabled: true
 
   execution-logs-consumer:
-    handler: src/handlers/execution_logs_consumer_handler.handler
+    handler: src/handlers/sqs_handler.execution_logs_consumer_handler
     events:
       - sqs:
           arn:

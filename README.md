@@ -9,26 +9,74 @@ Prueba técnica en Python para extraer información de:
 
 ```text
 connecticut-scraper-challenge
-├── README.md
-├── docker-compose.yml
-├── requirements.txt
-├── serverless.yml
-├── scripts
-│   ├── common
-│   ├── foreclosures
-│   ├── tax_sales
-│   └── seed_prompts.py
-├── src
-│   ├── api
-│   ├── handlers
-│   ├── repositories
-│   └── services
-└── tests
+├─ .python-version
+├─ README.md
+├─ docker-compose.yml
+├─ package-lock.json
+├─ package.json
+├─ prueba-tecnica-senior.md
+├─ requirements.txt
+├─ serverless.yml
+├─ scripts
+│  ├─ foreclosures
+│  │  └─ main.py
+│  └─ tax_sales
+│     └─ main.py
+├─ src
+│  ├─ api
+│  │  └─ foreclosures
+│  │     └─ scrape
+│  │        └─ post.py
+│  ├─ common
+│  │  ├─ config.py
+│  │  ├─ gemini.py
+│  │  ├─ logging_config.py
+│  │  └─ scraper_client.py
+│  ├─ consumer
+│  │  └─ execution_logs_consumer.py
+│  ├─ handlers
+│  │  ├─ api_handler.py
+│  │  ├─ lambda_handler.py
+│  │  └─ sqs_handler.py
+│  ├─ lambda
+│  │  └─ scrape-tax-sales
+│  │     └─ main.py
+│  ├─ repositories
+│  │  ├─ base_repository.py
+│  │  ├─ execution_logs_repository.py
+│  │  ├─ foreclosures_repository.py
+│  │  ├─ prompts_repository.py
+│  │  └─ tax_sales_repository.py
+│  ├─ scrapers
+│  │  ├─ foreclosures
+│  │  │  ├─ city_parser.py
+│  │  │  ├─ client.py
+│  │  │  └─ normalize_property.py
+│  │  └─ tax_sales
+│  │     ├─ client.py
+│  │     ├─ downloader.py
+│  │     └─ parser.py
+│  ├─ scripts
+│  │  └─ seed_prompts.py
+│  ├─ services
+│  │  ├─ execution_logs_consumer.py
+│  │  ├─ foreclosures_service.py
+│  │  └─ tax_sales_service.py
+│  └─ topic
+│     └─ tax_sales_finished.py
+└─ tests
+   ├─ conftest.py
+   ├─ foreclosures
+   │  └─ test_normalize_property.py
+   └─ tax_sales
+      └─ test_parser.py
+
 ```
 
 ## Requisitos
 
-- Python `3.12`
+- Python `3.12` para desarrollo local
+- AWS Lambda configurado con Python `3.11` en despliegue
 - Docker y Docker Compose
 - MongoDB local o remoto
 - API key de Gemini
@@ -67,6 +115,8 @@ GEMINI_MODEL=gemini-2.5-flash-lite
 
 BASE_URL_CT=https://sso.eservices.jud.ct.gov/Foreclosures/Public/
 URL_CT_TAX=https://cttaxsales.com/upcoming-tax-sales/
+
+SNS_TOPIC_ARN=arn:aws:sns:us-east-1:*account_id*:tax-sales-finished
 ```
 
 4. Levantar MongoDB local con Docker:
@@ -76,12 +126,13 @@ docker compose up -d
 ```
 
 ## Seed de Prompts
-### Nota: se creo solo para no crearlos manualmente, o por un endpoint en el futuro se puede agregar un CRUD de prompts, (queriendo hacer un init database)
+
+Nota: este script se creó para inicializar los prompts en MongoDB sin tener que insertarlos manualmente. Más adelante podría reemplazarse por un CRUD o por un proceso de inicialización de base de datos.
 
 Para crear los prompts en la colección `prompts` en MongoDB:
 
 ```bash
-python -m scripts.seed_prompts
+python src/scripts/seed_prompts.py
 ```
 
 ## Parte 1
@@ -101,7 +152,7 @@ python scripts/tax_sales/main.py
 El proceso de `tax_sales`:
 
 - scrapea la página de `upcoming tax sales`
-- descarga los PDFs en [`scripts/tax_sales/downloads/`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/scripts/tax_sales/downloads)
+- descarga los PDFs en `src/scrapers/tax_sales/downloads/`
 - consulta prompts activos desde MongoDB
 - ejecuta extracción con Gemini
 - guarda resultados en la colección `tax_sales`
@@ -119,7 +170,7 @@ pytest
 ### Ejecutar tests con cobertura
 
 ```bash
-pytest --cov=scripts --cov-report=term-missing
+pytest --cov=src --cov-report=term-missing
 ```
 
 Actualmente hay tests para:
@@ -141,9 +192,9 @@ POST /foreclosures/scrape
 
 Archivos principales:
 
-- [`src/api/foreclosures/scrape/post.py`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/src/api/foreclosures/scrape/post.py)
-- [`src/handlers/api_handler.py`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/src/handlers/api_handler.py)
-- [`scripts/foreclosures/service.py`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/scripts/foreclosures/service.py)
+- `src/api/foreclosures/scrape/post.py`
+- `src/handlers/api_handler.py`
+- `src/services/foreclosures_service.py`
 
 ### 2.2 Tax Sales como Lambda Standalone
 
@@ -160,17 +211,18 @@ Trigger esperado:
 
 Archivos principales:
 
-- [`src/handlers/scrape_tax_sales_handler.py`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/src/handlers/scrape_tax_sales_handler.py)
-- [`scripts/tax_sales/service.py`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/scripts/tax_sales/service.py)
+- `src/handlers/lambda_handler.py`
+- `src/services/tax_sales_service.py`
+- `src/lambda/scrape-tax-sales/main.py`
 
 ### 2.3 Repositories
 
 Repositorios implementados:
 
-- [`src/repositories/foreclosures_repository.py`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/src/repositories/foreclosures_repository.py)
-- [`src/repositories/tax_sales_repository.py`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/src/repositories/tax_sales_repository.py)
-- [`src/repositories/prompts_repository.py`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/src/repositories/prompts_repository.py)
-- [`src/repositories/execution_logs_repository.py`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/src/repositories/execution_logs_repository.py)
+- `src/repositories/foreclosures_repository.py`
+- `src/repositories/tax_sales_repository.py`
+- `src/repositories/prompts_repository.py`
+- `src/repositories/execution_logs_repository.py`
 
 ### 2.4 Flujo SNS -> SQS
 
@@ -184,15 +236,15 @@ Implementado de forma opcional para registrar ejecuciones:
 
 Handlers declarados:
 
-- [`src/handlers/api_handler.py`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/src/handlers/api_handler.py)
-- [`src/handlers/scrape_tax_sales_handler.py`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/src/handlers/scrape_tax_sales_handler.py)
-- consumer SQS para logs de ejecución
+- `src/handlers/api_handler.py`
+- `src/handlers/lambda_handler.py`
+- `src/handlers/sqs_handler.py`
 
 ## Serverless
 
 La intención de despliegue está declarada en:
 
-- [`serverless.yml`](/Users/caol/Documents/Projects/Technical/connecticut-scraper-challenge/serverless.yml)
+- `serverless.yml`
 
 Incluye:
 
