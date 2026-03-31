@@ -149,6 +149,34 @@ python scripts/foreclosures/main.py
 python scripts/tax_sales/main.py
 ```
 
+> response: 
+
+```bash
+2026-03-30 19:06:00,007 - src.services.foreclosures_service - INFO - Iniciando scraper de Foreclosures...
+2026-03-30 19:06:00,047 - src.services.foreclosures_service - INFO - Se encontraron 57 towns ya guardados en MongoDB: 
+2026-03-30 19:06:01,045 - src.services.foreclosures_service - INFO - Se encontraron 81 ciudades para procesar: 
+2026-03-30 19:06:01,046 - src.services.foreclosures_service - INFO - Extrayendo datos de: ANSONIA...
+2026-03-30 19:06:01,233 - src.services.foreclosures_service - INFO - Omitiendo AVON: ya existe en MongoDB.
+2026-03-30 19:06:01,233 - src.services.foreclosures_service - INFO - Omitiendo BERLIN: ya existe en MongoDB.
+2026-03-30 19:06:01,233 - src.services.foreclosures_service - INFO - Omitiendo BOLTON: ya existe en MongoDB.
+2026-03-30 19:06:01,233 - src.services.foreclosures_service - INFO - Extrayendo datos de: BRANFORD...
+...
+2026-03-30 19:06:06,704 - src.services.foreclosures_service - INFO - Extrayendo datos de: MERIDEN...
+2026-03-30 19:06:06,923 - src.services.foreclosures_service - INFO - Omitiendo MIDDLEBURY: ya existe en MongoDB.
+2026-03-30 19:06:06,923 - src.services.foreclosures_service - INFO - Omitiendo MIDDLEFIELD: ya existe en MongoDB.
+2026-03-30 19:06:06,923 - src.services.foreclosures_service - INFO - Extrayendo datos de: MIDDLETOWN...
+2026-03-30 19:06:07,223 - src.services.foreclosures_service - INFO - Omitiendo MILFORD: ya existe en MongoDB.
+....
+2026-03-30 19:06:07,224 - src.services.foreclosures_service - INFO - Omitiendo WOLCOTT: ya existe en MongoDB.
+2026-03-30 19:06:07,224 - src.services.foreclosures_service - INFO - Guardando datos en MongoDB...
+2026-03-30 19:06:07,260 - src.services.foreclosures_service - INFO - ✅ Proceso terminado. Modificados/Nuevos: 28
+{
+  "success": true,
+  "modified_count": 0,
+  "upserted_count": 28
+}
+```
+
 El proceso de `tax_sales`:
 
 - scrapea la página de `upcoming tax sales`

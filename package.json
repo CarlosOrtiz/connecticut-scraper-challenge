@@ -22,6 +22,8 @@
   },
   "homepage": "https://github.com/CarlosOrtiz/connecticut-scraper-challenge#readme",
   "devDependencies": {
+    "serverless": "^3.40.0",
+    "serverless-offline": "^13.9.0",
     "serverless-python-requirements": "^6.1.2"
   }
 }
