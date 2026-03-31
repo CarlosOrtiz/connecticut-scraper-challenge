@@ -142,13 +142,6 @@ python src/scripts/seed_prompts.py
 ```bash
 python scripts/foreclosures/main.py
 ```
-
-### Ejecutar Tax Sales
-
-```bash
-python scripts/tax_sales/main.py
-```
-
 > response: 
 
 ```bash
@@ -177,6 +170,11 @@ python scripts/tax_sales/main.py
 }
 ```
 
+### Ejecutar Tax Sales
+
+```bash
+python scripts/tax_sales/main.py
+```
 El proceso de `tax_sales`:
 
 - scrapea la página de `upcoming tax sales`
